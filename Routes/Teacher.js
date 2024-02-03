@@ -150,7 +150,7 @@ router.get('/ProfilePicture', fetchuser, async(req, res) => {
 
 router.post('/AddFeedback/:teacher_profile_id', fetchuser, [                                                    //Both Adding and Updating Feedback
     body('feedback', 'Enter a valid feedback').isString().isIn(['1', '2', '3', '4', '5']),
-    body('feedback_text', 'Enter a valid feedback text').isString().isLength({ min: 5 }),
+    body('feedback_text', 'Enter a valid feedback text').isString(),
 ], async (req, res) => {
 
     let success = false;
