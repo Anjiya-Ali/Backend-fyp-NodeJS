@@ -8,6 +8,7 @@ const StudentProfile = require('../Models/StudentProfile');
 const TeacherProfile = require('../Models/TeacherProfile');
 const User = require('../Models/User');
 const Hirer = require('../Models/Hirer');
+const Community = require('../Models/Community')
 
 router.get('/GetTeacherTopicRequest', fetchuser, async (req, res)=>{
     try{
@@ -418,5 +419,26 @@ router.get('/WithdrawProposal/:proposalId', fetchuser, async (req, res)=>{
         res.status(500).send("Some error occured in Withdrawing Proposal for Topic Request");
     }
 })
+
+router.get('/GetPopularCommunities', fetchuser, async (req, res) => {
+    try {
+        const user_id = req.user.id;
+        const ObjectId = mongoose.Types.ObjectId;
+        const userProfile = await User.findOne({ _id: new ObjectId(user_id) });
+        if (!userProfile) {
+            return res.status(400).json({ success: false, error: "User profile not found" });
+        }
+
+        const communities = await Community.find({})
+            .sort({ total_members: -1 })
+            .limit(5);
+
+        const Success = true;
+        res.json({ Success, communities });
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).send("Some error occurred in Retrieving Popular Communities");
+    }
+});  
 
 module.exports = router

@@ -70,10 +70,6 @@ router.put('/UpdateLiveSession/:key', fetchuser, upload.single('featured_image')
 
     let success = false;
 
-    if (!req.file) {
-        return res.status(400).json({ success: false, error: 'No file uploaded' });
-    }
-
     const teacher_profile_id = req.user.id;
     const ObjectId = mongoose.Types.ObjectId;
     const key = req.params.key; 
@@ -85,18 +81,18 @@ router.put('/UpdateLiveSession/:key', fetchuser, upload.single('featured_image')
             return res.status(400).json({ success, error: "Teacher profile not found" });
         }
 
-        const uniqueFilename = `${Date.now()}_${req.file.originalname}`;
-
         const session = await LiveSessions.findOne({ _id: new ObjectId(key) });
 
         if (!session) {
             return res.status(404).json({ success, error: "Session not found" });
         }
-
         const combinedDateTime = new Date(`${req.body.date}T${req.body.time}Z`);
         session.day = new Date(combinedDateTime);
         session.title = req.body.title;
-        session.featured_image = `Uploads/SessionImages/${uniqueFilename}`,
+        if(req.file){
+            const uniqueFilename = `${date}_${req.file.originalname}`;
+            session.featured_image = `Uploads/SessionImages/${uniqueFilename}`
+        }
 
         await session.save();
 
@@ -366,7 +362,9 @@ router.get('/GetMyLiveSession', fetchuser, async (req, res) => {
                 },
                 { post_status : "Published" }
             ]
-        });
+        }).sort()
+        .lean()
+        .exec();;
 
         success = true;
         if(liveSessionsByTeacher.length == 0){
@@ -429,11 +427,11 @@ router.get('/GetAllUpcomingSessions', fetchuser, async (req, res) => {
 
                     var interested = false;
 
-                    const dateOptions = { day: 'numeric', month: 'short', year: 'numeric' };
-                    const timeOptions = { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Asia/Karachi' };
+                    // const dateOptions = { day: 'numeric', month: 'short', year: 'numeric' };
+                    // const timeOptions = { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Asia/Karachi' };
 
-                    const date = new Date(liveSession.day).toLocaleDateString('en-US', dateOptions);
-                    const time = new Date(liveSession.day).toLocaleTimeString('en-US', timeOptions);
+                    // const date = new Date(liveSession.day).toLocaleDateString('en-US', dateOptions);
+                    // const time = new Date(liveSession.day).toLocaleTimeString('en-US', timeOptions);
 
                     const interestedSession = await interestedSessions.findOne({ student_id : new ObjectId(person_id), session_id : new ObjectId(liveSession._id) });
                     
@@ -447,8 +445,7 @@ router.get('/GetAllUpcomingSessions', fetchuser, async (req, res) => {
                         liveSessionImage: liveSession.featured_image,
                         liveSessionTeacher: teacherName,
                         interested: interested,
-                        date: date,
-                        time: time
+                        day: liveSession.day
                     });
 
                 }

@@ -572,7 +572,3 @@ router.get('/GetCerificateDetails/:key', fetchuser, async (req, res) => {
 });
 
 module.exports = router;
-
-
-
-

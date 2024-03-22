@@ -48,7 +48,10 @@ app.use('/api/Post', fetchuser, require('./Routes/Posts'))
 
 app.use('/api/StudentTopicRequests',require('./Routes/StudentTopicRequests'))
 app.use('/api/TeacherTopicRequests',require('./Routes/TeacherTopicRequests'))
+app.use('/api/Notifications',require('./Routes/Notifications'))
+app.use('/api/Payment',require('./Routes/Payment'))
+app.use('/api/ScheduledMeetings',require('./Routes/ScheduledMeetings'))
 
-app.listen(port, '192.168.0.107',() => {
+app.listen(port, '192.168.0.104',() => {
   console.log(`Example app listening on port ${port}`)
 })

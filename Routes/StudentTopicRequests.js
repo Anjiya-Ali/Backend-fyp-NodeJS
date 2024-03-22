@@ -108,7 +108,9 @@ router.get('/GetStudentTopicRequest', fetchuser, async (req, res)=>{
         }
 
         else{
-            const studentTopicRequests = await BidTopic.find({ student_id : new ObjectId(student_profile_id) });
+            const studentTopicRequests = await BidTopic.find({ student_id : new ObjectId(student_profile_id) }).sort({ initiated_date: -1 })
+            .lean()
+            .exec();
             let topicRequestInfo = [];
             let success;
 

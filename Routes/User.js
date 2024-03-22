@@ -140,10 +140,6 @@ router.post(
 
     try {
       let user = await User.findOne({ email });
-      if (user.status && user.status === "Deleted") {
-        success = false;
-        return res.status(200).json({ success, error: "User not exist" });
-      }
       if (!user) {
         success = false;
         return res
@@ -166,6 +162,11 @@ router.post(
             success,
             error: "Please try to login with correct credentials",
           });
+      }
+
+      if (user.status && user.status === "Deleted") {
+        success = false;
+        return res.status(200).json({ success, error: "User not exist" });
       }
 
       const privilegeId = user.privilege_id;

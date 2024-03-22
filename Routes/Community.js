@@ -6,7 +6,7 @@ const mongoose = require('mongoose');
 const { body, validationResult } = require('express-validator');
 const path = require('path');
 const fs = require('fs');
-
+const TeacherProfile = require('../Models/TeacherProfile');
 
 const multer = require('multer');
 const Community = require('../Models/Community')
@@ -738,7 +738,8 @@ router.get('/getOne/:communityId/pendingMembers', fetchuser, async (req, res) =>
     } catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occured while processing the request");
-    }
+    }  
+
 });
 
 module.exports = router

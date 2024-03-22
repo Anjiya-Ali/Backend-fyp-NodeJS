@@ -11,6 +11,9 @@ const CommunityPost = require('../Models/CommunityPosts');
 const Community = require('../Models/Community');
 const StudentProfile = require('../Models/StudentProfile');
 const TeacherProfile = require('../Models/TeacherProfile');
+
+const SocialHub = require('../Models/SocialHub');
+
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
@@ -47,10 +50,9 @@ router.post('/createPost', upload.array('file_attachments'), [
             fs.renameSync(file.path, path.join('Uploads', 'Posts', file.originalname));
             return path.join('Uploads', 'Posts', file.originalname);
         });
-        console.log(file_attachments)
         const post = await Post.create({
             description,
-            file_attachments:file_attachments
+            file_attachments: file_attachments
         });
 
         if (post) {
@@ -257,9 +259,112 @@ router.get('/feed', async (req, res) => {
 
         success = true;
         postsWithNames.sort((a, b) => new Date(b.post_id.date) - new Date(a.post_id.date));
-        // const postersArray = postsWithNames.map(post => post.poster);
+        const searcher = req.user.id;
+        const realUser = new mongoose.Types.ObjectId(searcher);
+        const stringer = "65350d4002f1f4014d2b7a07";
+        const relId = new mongoose.Types.ObjectId(stringer);
 
-        return res.json({ success, posts: postsWithNames });
+        var resu;
+        const resulter = await TeacherProfile.findOne({ teacher_profile_id: realUser });
+        if (resulter) {
+            resu = await SocialHub.find({
+                $and: [
+                    {
+                        $or: [
+                            { person_1_id: searcher },
+                            { person_2_id: searcher }
+                        ]
+                    },
+                    { status: 'Accepted' },
+                    { relationship_id: relId }
+                ]
+            });
+        } else {
+            resu = await SocialHub.find({
+                $and: [
+                    {
+                        $or: [
+                            { person_1_id: searcher },
+                            { person_2_id: searcher }
+                        ]
+                    },
+                    { status: 'Accepted' },
+                ]
+            });
+        }
+
+        var arr = [realUser];
+        for (var i = 0; i < resu.length; i++) {
+            if (resu[i].person_1_id != searcher) {
+                arr.push(resu[i].person_1_id);
+            }
+            if (resu[i].person_2_id != searcher) {
+                arr.push(resu[i].person_2_id);
+            }
+        }
+        const userPostsOrg = await UserPost.find({ user_id: { $in: arr } });
+        const postIdsOrg = userPostsOrg.map(obj => obj.post_id);
+        const existingPostIds = await CommunityPost.find({}).distinct('post_id');
+
+
+        const final = [];
+
+        var postsWithNamesOrg = [];
+        var appendedArray = [];
+        for (let i = 0; i < postIdsOrg.length; i++) {
+            let postId = postIdsOrg[i];
+            if (!existingPostIds.some(existingId => existingId.equals(postId))) {
+                final.push(postId);
+            }
+        }
+        if (final.length > 0) {
+            const resultOrg = await Post.aggregate([
+                {
+                    $match: {
+                        _id: { $in: final }
+                    },
+                },
+                {
+                    $sort: { Date: -1 }
+                }
+            ]);
+            const names = await User.find({ _id: { $in: arr } }).select("first_name last_name")
+
+            const commentsCountOrg = await Comment.aggregate([
+                {
+                    $match: { post_id: { $in: final } }
+                },
+                {
+                    $group: {
+                        _id: "$post_id",
+                        count: { $sum: 1 }
+                    }
+                }
+            ]);
+
+            const commentsCountMapOrg = new Map(commentsCountOrg.map(item => [String(item._id), item.count]));
+
+            for (var i = 0; i < final.length; i++) {
+                const foundDocument = userPostsOrg.find(obj => obj.post_id.equals(resultOrg[i]._id));
+                const foundUser = names.find(obj => obj._id.equals(foundDocument.user_id));
+
+                const commentsCounter = commentsCountMapOrg.get(String(resultOrg[i]._id)) || 0;
+                postsWithNamesOrg.push(
+                    {
+                        post_id: resultOrg[i],
+                        commentsCount: commentsCounter,
+                        name: foundUser.first_name + ' ' + foundUser.last_name,
+                        poster: foundUser._id
+                    }
+                )
+            }
+
+            appendedArray = postsWithNames.concat(postsWithNamesOrg);
+            appendedArray.sort((a, b) => b.post_id.date - a.post_id.date);
+           
+        }
+
+        return res.json({ success, posts: postsWithNamesOrg.length == 0 ? postsWithNames : appendedArray });
     }
     catch (error) {
         console.error(error.message);

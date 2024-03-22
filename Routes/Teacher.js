@@ -1814,4 +1814,36 @@ router.get('/GetProfilePicture', fetchuser, async (req, res) => {
     }
 });
 
+router.get('/getAll', fetchuser, async (req, res) => { //For Both Adding and Updaing Profile Picture
+
+    try {
+        const teachers = await TeacherProfile.find();
+        var teacherUser = [];
+
+        for (var i = 0; i < teachers.length; i++) {
+            const user = await User.findById(teachers[i].teacher_profile_id).select("first_name last_name email dob gender country RegisteringDate status");
+            const mergedObject = { ...user.toObject(), ...teachers[i].toObject() }; // Merge both objects
+            teacherUser.push(mergedObject);
+        }
+        teacherUser.sort((a, b) => {
+            const nameA = a.first_name.toUpperCase();
+            const nameB = b.first_name.toUpperCase();
+
+            if (nameA < nameB) {
+                return -1;
+            }
+            if (nameA > nameB) {
+                return 1;
+            }
+            return 0;
+        });
+        res.json({ success: true, teachers: teacherUser });
+    }
+
+    catch (error) {
+        console.error(error.message);
+        res.status(500).send("Some error occurred while returning all teachers information");
+    }
+});
+
 module.exports = router
