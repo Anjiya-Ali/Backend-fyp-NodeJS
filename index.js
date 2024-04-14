@@ -52,6 +52,6 @@ app.use('/api/Notifications',require('./Routes/Notifications'))
 app.use('/api/Payment',require('./Routes/Payment'))
 app.use('/api/ScheduledMeetings',require('./Routes/ScheduledMeetings'))
 
-app.listen(port, '192.168.0.104',() => {
+app.listen(port, '192.168.0.107',() => {
   console.log(`Example app listening on port ${port}`)
 })

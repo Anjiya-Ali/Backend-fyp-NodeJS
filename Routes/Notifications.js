@@ -9,6 +9,7 @@ router.post('/CreateNotification', fetchuser, async (req, res) => {
 
     let success = false;
     const user_id = req.user.id;
+    const noti_user_id = req.body.user_id;
     const ObjectId = mongoose.Types.ObjectId;
 
     try {
@@ -19,12 +20,26 @@ router.post('/CreateNotification', fetchuser, async (req, res) => {
         }
 
         const notification = await Notifications.create({
-            user_id: new ObjectId(user_id),
+            user_id: new ObjectId(noti_user_id),
             message : req.body.message,
             redirect: req.body.redirect,
             createdAt: new Date(),
             read: false
         });
+
+        // const token = await FirebaseToken.findOne({ user_id: new ObjectId(noti_user_id)});
+
+        // if (token) {
+        //     const message = {
+        //         notification: {
+        //             title: req.body.title,
+        //             body: req.body.message
+        //         },
+        //         token: token.token
+        //     }
+    
+        //     sendPushNotification(message);
+        // }
         
         success = true;
         res.json({ success, notification })
@@ -35,7 +50,6 @@ router.post('/CreateNotification', fetchuser, async (req, res) => {
         res.status(500).send("Some error occurred while creating notification");
     }
 });
-
 
 router.get('/GetAllNotifications', fetchuser, async (req, res) => {
     let success = false;
